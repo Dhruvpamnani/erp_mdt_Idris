@@ -1,3 +1,5 @@
+
+local QBCore = exports['qb-core']:GetCoreObject()
 -- (Start) Opening the MDT and sending data
 
 AddEventHandler('erp_mdt:AddLog', function(text)
@@ -38,17 +40,10 @@ end, false)
 
 RegisterNetEvent('erp_mdt:open')
 AddEventHandler('erp_mdt:open', function(source)
-	TriggerEvent('echorp:getplayerfromid', source, function(result)
-		if result then
-			if result.job and (result.job.isPolice or (result.job.name == 'ambulance' or result.job.name == 'doj')) then
-				TriggerEvent('echorp:getJobInfo', result.job.name, function(jobInfo)
-					if jobInfo then
-						TriggerClientEvent('erp_mdt:open', result.source, result.job, jobInfo['grades'][result.job.grade]['label'], result.lastname, result.firstname)
-					end
-				end)
-			end
-		end
-	end)
+	local xPlayer = QBCore.Functions.GetPlayer(source)
+    if xPlayer.PlayerData.job.name == 'police' then
+		TriggerClientEvent('erp_mdt:open', source, 'police', xPlayer.PlayerData.job.grade.name, xPlayer.PlayerData.charinfo.lastname, xPlayer.PlayerData.charinfo.firstname)
+	end
 end)
 
 RegisterNetEvent('echorp:playerSpawned')

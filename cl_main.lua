@@ -2,31 +2,27 @@ local isOpen = false
 local callSign = ""
 local PlayerData = {}
 
-RegisterNetEvent('echorp:playerSpawned') -- Use this to grab player info on spawn.
-AddEventHandler('echorp:playerSpawned', function(sentData) PlayerData = sentData end)
-
 RegisterNetEvent('echorp:updateinfo')
 AddEventHandler('echorp:updateinfo', function(toChange, targetData) 
     PlayerData[toChange] = targetData
 end)
 
-RegisterNetEvent('echorp:doLogout') -- Use this to logout.
-AddEventHandler('echorp:doLogout', function(sentData) 
-    PlayerData = {} 
+RegisterNetEvent('QBCore:Client:OnPlayerUnload', function()
+    PlayerData = {}
 end)
 
 function EnableGUI(enable)
     print("MDT Enable GUI", enable)
     if enable then TriggerServerEvent('erp_mdt:opendashboard') end
     SetNuiFocus(enable, enable)
-    SendNUIMessage({ type = "show", enable = enable, job = PlayerData['job']['name'] })
+    SendNUIMessage({ type = "show", enable = enable, job = 'police' })
     isOpen = enable
     TriggerEvent('erp_mdt:animation')
 end
 
 function RefreshGUI()
     SetNuiFocus(false, false)
-    SendNUIMessage({ type = "show", enable = false, job = PlayerData['job']['name'] })
+    SendNUIMessage({ type = "show", enable = false, job = 'police' })
     isOpen = false
 end
 
