@@ -163,18 +163,18 @@ end)
 
 RegisterNetEvent('mdt:client:newBulletin', function(ignoreId, sentData, job)
     if ignoreId == GetPlayerServerId(PlayerId()) then return end;
-    if job == 'police' and PlayerData['job']['isPolice'] then
+    if PlayerData.job.name == 'police' then
         SendNUIMessage({ type = "newBulletin", data = sentData })
-    elseif job == PlayerData['job']['name'] then
+    elseif PlayerData.job.name == 'ambulance' then
         SendNUIMessage({ type = "newBulletin", data = sentData })
     end
 end)
 
 RegisterNetEvent('mdt:client:deleteBulletin', function(ignoreId, sentData, job)
     if ignoreId == GetPlayerServerId(PlayerId()) then return end;
-    if job == 'police' and PlayerData['job']['isPolice'] then
+    if PlayerData.job.name == 'police' then
         SendNUIMessage({ type = "deleteBulletin", data = sentData })
-    elseif job == PlayerData['job']['name'] then
+    elseif PlayerData.job.name == 'ambulance' then
         SendNUIMessage({ type = "deleteBulletin", data = sentData })
     end
 end)
@@ -568,8 +568,8 @@ RegisterNetEvent('mdt:client:setRadio', function(radio, name)
 end)
 
 RegisterNetEvent('mdt:client:sig100', function(radio, type)
-    local job = PlayerData['job']
-    if (job.isPolice or job.name == 'ambulance') and job.duty == 1 then
+    local job = PlayerData.job.name
+    if (job == "police" or job == "ambulance") and job.duty == 1 then
         if type == true then
             exports['erp_notifications']:PersistentAlert("START", "signall100-"..radio, "inform", "Radio "..radio.." is currently signal 100!")
         end
@@ -716,12 +716,12 @@ RegisterNetEvent('mdt:client:setWaypoint', function(callInformation)
 end)
 
 RegisterNetEvent('mdt:client:callDetach', function(callid, sentData)
-    local job = PlayerData['job']
-    if job.isPolice or job.name == 'ambulance' then SendNUIMessage({ type = "callDetach", callid = callid, data = tonumber(sentData) }) end
+    local job = PlayerData.job.name
+    if job == "police" or job == 'ambulance' then SendNUIMessage({ type = "callDetach", callid = callid, data = tonumber(sentData) }) end
 end)
 RegisterNetEvent('mdt:client:callAttach', function(callid, sentData)
-    local job = PlayerData['job']
-    if job.isPolice or job.name == 'ambulance' then
+    local job = PlayerData.job.name
+    if job == "police" or job == 'ambulance' then
         SendNUIMessage({ type = "callAttach", callid = callid, data = tonumber(sentData) })
     end
 end)
@@ -735,8 +735,8 @@ RegisterNetEvent('mdt:client:setWaypoint:unit', function(sentData)
 end)
 
 RegisterNetEvent('mdt:client:dashboardMessage', function(sentData)
-    local job = PlayerData['job']
-    if job.isPolice or job.name == 'ambulance' then
+    local job = PlayerData.job.name
+    if job == "police" or job == 'ambulance' then
         SendNUIMessage({ type = "dispatchmessage", data = sentData })
     end
 end)
