@@ -846,8 +846,10 @@ AddEventHandler('erp_mdt:getPenalCode', function(titles, penalcode)
 end)
 
 RegisterNetEvent('erp_mdt:getActiveUnits')
-AddEventHandler('erp_mdt:getActiveUnits', function(lspd, bcso, sast, sasp, doc, sapr, pa, ems)
-    SendNUIMessage({ type = "getActiveUnits", lspd = lspd, bcso = bcso, sast = sast, doc = doc, sasp = sasp, sapr = sapr, pa = pa, ems = ems })
+AddEventHandler('erp_mdt:getActiveUnits', function(police, ambulance)
+    print(json.encode(police))
+    print(json.encode(ambulance))
+    SendNUIMessage({ type = "getActiveUnits", police = police, ambulance = ambulance})
 end)
 
 RegisterNUICallback("toggleDuty", function(data, cb)
