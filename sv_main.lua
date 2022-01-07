@@ -367,63 +367,61 @@ end)
 
 RegisterNetEvent('erp_mdt:opendashboard')
 AddEventHandler('erp_mdt:opendashboard', function()
-	TriggerEvent('echorp:getplayerfromid', source, function(result)
-		if result then
-			if result.job and result.job.isPolice then
-				exports.oxmysql:execute('SELECT * FROM `pd_bulletin`', {}, function(bulletin)
-					TriggerClientEvent('erp_mdt:dashboardbulletin', result.source, bulletin)
-				end)
-			elseif result.job and (result.job.name == 'ambulance') then
-				exports.oxmysql:execute('SELECT * FROM `ems_bulletin`', {}, function(bulletin)
-					TriggerClientEvent('erp_mdt:dashboardbulletin', result.source, bulletin)
-				end)
-			elseif result.job and (result.job.name == 'doj') then
-				exports.oxmysql:execute('SELECT * FROM `doj_bulletin`', {}, function(bulletin)
-					TriggerClientEvent('erp_mdt:dashboardbulletin', result.source, bulletin)
-				end)
-			end
-		end
-	end)
+	local src = source
+	local Player = QBCore.Functions.GetPlayer(source)
+	if Player.PlayerData.job.name == 'police' then
+		exports.oxmysql:execute('SELECT * FROM `pd_bulletin`', {}, function(bulletin)
+			TriggerClientEvent('erp_mdt:dashboardbulletin', src, bulletin)
+		end)
+	elseif Player.PlayerData.job.name == 'ambulance' then
+		exports.oxmysql:execute('SELECT * FROM `ems_bulletin`', {}, function(bulletin)
+			TriggerClientEvent('erp_mdt:dashboardbulletin', source, bulletin)
+		end)
+	elseif Player.PlayerData.job.name == 'doj' then
+		exports.oxmysql:execute('SELECT * FROM `doj_bulletin`', {}, function(bulletin)
+			TriggerClientEvent('erp_mdt:dashboardbulletin', source, bulletin)
+		end)
+	end
 end)
 
 RegisterNetEvent('erp_mdt:newBulletin')
 AddEventHandler('erp_mdt:newBulletin', function(title, info, time)
 	if title and info and time then
-		TriggerEvent('echorp:getplayerfromid', source, function(result)
-			if result then
-				if result.job and result.job.isPolice then
-					exports.oxmysql:insert('INSERT INTO `pd_bulletin` (`title`, `desc`, `author`, `time`) VALUES (:title, :desc, :author, :time)', {
-						title = title,
-						desc = info,
-						author = result.fullname,
-						time = tostring(time)
-					}, function(sqlResult)
-						TriggerEvent('erp_mdt:AddLog', "A new bulletin was added by "..result.firstname.." "..result.lastname.." with the title: "..title.."!")
-						TriggerClientEvent('erp_mdt:newBulletin', -1, result.source, {id = sqlResult, title = title, info = info, time = time, author = result.fullname}, 'police')
-					end)
-				elseif result.job and (result.job.name == 'ambulance') then
-					exports.oxmysql:insert('INSERT INTO `ems_bulletin` (`title`, `desc`, `author`, `time`) VALUES (:title, :desc, :author, :time)', {
-						title = title,
-						desc = info,
-						author = result.fullname,
-						time = tostring(time)
-					}, function(sqlResult)
-						TriggerEvent('erp_mdt:AddLog', "A new bulletin was added by "..result.firstname.." "..result.lastname.." with the title: "..title.."!")
-						TriggerClientEvent('erp_mdt:newBulletin', -1, result.source, {id = sqlResult, title = title, info = info, time = time, author = result.fullname}, result.job.name)
-					end)
-				elseif result.job and (result.job.name == 'doj') then
-					exports.oxmysql:insert('INSERT INTO `doj_bulletin` (`title`, `desc`, `author`, `time`) VALUES (:title, :desc, :author, :time)', {
-						title = title,
-						desc = info,
-						author = result.fullname,
-						time = tostring(time)
-					}, function(sqlResult)
-						TriggerEvent('erp_mdt:AddLog', "A new bulletin was added by "..result.firstname.." "..result.lastname.." with the title: "..title.."!")
-						TriggerClientEvent('erp_mdt:newBulletin', -1, result.source, {id = sqlResult, title = title, info = info, time = time, author = result.fullname}, result.job.name)
-					end)
-				end
-			end
-		end)
+		print('src: ',source)
+		local Player = QBCore.Functions.GetPlayer(source)
+    	if Player.PlayerData.job.name == 'police' then
+		-- if result.job and result.job.isPolice then
+			exports.oxmysql:insert('INSERT INTO `pd_bulletin` (`title`, `desc`, `author`, `time`) VALUES (:title, :desc, :author, :time)', {
+				title = title,
+				desc = info,
+				author = Player.PlayerData.charinfo.firstname,
+				time = tostring(time)
+			}, function(sqlResult)
+				print(sqlResult)
+				-- TriggerEvent('erp_mdt:AddLog', "A new bulletin was added by "..result.firstname.." "..result.lastname.." with the title: "..title.."!")
+				TriggerClientEvent('erp_mdt:newBulletin', -1, source, {id = sqlResult, title = title, info = info, time = time, author = author}, 'police')
+			end)
+		elseif Player.PlayerData.job.name == 'ambulance' then
+			exports.oxmysql:insert('INSERT INTO `ems_bulletin` (`title`, `desc`, `author`, `time`) VALUES (:title, :desc, :author, :time)', {
+				title = title,
+				desc = info,
+				author = result.fullname,
+				time = tostring(time)
+			}, function(sqlResult)
+				TriggerEvent('erp_mdt:AddLog', "A new bulletin was added by "..result.firstname.." "..result.lastname.." with the title: "..title.."!")
+				TriggerClientEvent('erp_mdt:newBulletin', -1, result.source, {id = sqlResult, title = title, info = info, time = time, author = result.fullname}, result.job.name)
+			end)
+		elseif Player.PlayerData.job.name == 'doj' then
+			exports.oxmysql:insert('INSERT INTO `doj_bulletin` (`title`, `desc`, `author`, `time`) VALUES (:title, :desc, :author, :time)', {
+				title = title,
+				desc = info,
+				author = result.fullname,
+				time = tostring(time)
+			}, function(sqlResult)
+				TriggerEvent('erp_mdt:AddLog', "A new bulletin was added by "..result.firstname.." "..result.lastname.." with the title: "..title.."!")
+				TriggerClientEvent('erp_mdt:newBulletin', -1, result.source, {id = sqlResult, title = title, info = info, time = time, author = result.fullname}, result.job.name)
+			end)
+		end
 	end
 end)
 
