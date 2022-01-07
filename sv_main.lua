@@ -1,3 +1,5 @@
+
+local QBCore = exports['qb-core']:GetCoreObject()
 -- (Start) Opening the MDT and sending data
 
 AddEventHandler('erp_mdt:AddLog', function(text)
@@ -38,17 +40,10 @@ end, false)
 
 RegisterNetEvent('erp_mdt:open')
 AddEventHandler('erp_mdt:open', function(source)
-	TriggerEvent('echorp:getplayerfromid', source, function(result)
-		if result then
-			if result.job and (result.job.isPolice or (result.job.name == 'ambulance' or result.job.name == 'doj')) then
-				TriggerEvent('echorp:getJobInfo', result.job.name, function(jobInfo)
-					if jobInfo then
-						TriggerClientEvent('erp_mdt:open', result.source, result.job, jobInfo['grades'][result.job.grade]['label'], result.lastname, result.firstname)
-					end
-				end)
-			end
-		end
-	end)
+	local xPlayer = QBCore.Functions.GetPlayer(source)
+    if xPlayer.PlayerData.job.name == 'police' then
+		TriggerClientEvent('erp_mdt:open', source, 'police', xPlayer.PlayerData.job.grade.name, xPlayer.PlayerData.charinfo.lastname, xPlayer.PlayerData.charinfo.firstname)
+	end
 end)
 
 RegisterNetEvent('echorp:playerSpawned')
@@ -66,123 +61,43 @@ function GetCallsign(cid) return GetResourceKvpString(cid..'-callsign') end
 exports('GetCallsign', GetCallsign) -- exports['erp_mdt']:GetCallsign(cid)
 
 AddEventHandler('erp_mdt:open', function(source)
-	TriggerEvent('echorp:getplayerfromid', source, function(result)
-		if result then
-			if result.job and (result.job.isPolice or (result.job.name == 'ambulance' or result.job.name == 'doj')) then
-				local cs = GetCallsign(result.cid)
-				if cs then TriggerClientEvent('erp_mdt:updateCallsign', result['source'], cs) end
-				local lspd, bcso, sast, sasp, doc, sapr, pa, ems = {}, {}, {}, {}, {}, {}, {}, {}
-				local players = exports['echorp']:GetFXPlayers()
-				for k,v in pairs(players) do				
-					if v.job.name == 'lspd' then
-						local Radio = Player(v.source).state.radioChannel or 0
-						if Radio > 100 then
-							Radio = 0
-						end
-						table.insert(lspd, {
-							cid = v.cid,
-							name = v.fullname,
-							callsign = GetResourceKvpString(v['cid']..'-callsign'),
-							duty = v.job.duty,
-							radio = Radio,
-							sig100 = known100s[Radio]
-						})
-					elseif v.job.name == 'bcso' then
-						local Radio = Player(v.source).state.radioChannel or 0
-						if Radio > 100 then
-							Radio = 0
-						end
-						table.insert(bcso, {
-							cid = v.cid,
-							name = v.fullname,
-							callsign = GetResourceKvpString(v['cid']..'-callsign'),
-							duty = v.job.duty,
-							radio = Radio,
-							sig100 = known100s[Radio]
-						})
-					elseif v.job.name == 'sast' then
-						local Radio = Player(v.source).state.radioChannel or 0
-						if Radio > 100 then
-							Radio = 0
-						end
-						table.insert(sast, {
-							cid = v.cid,
-							name = v.fullname,
-							callsign = GetResourceKvpString(v['cid']..'-callsign'),
-							duty = v.job.duty,
-							radio = Radio,
-							sig100 = known100s[Radio]
-						})
-					elseif v.job.name == 'sasp' then
-						local Radio = Player(v.source).state.radioChannel or 0
-						if Radio > 100 then
-							Radio = 0
-						end
-						table.insert(sasp, {
-							cid = v.cid,
-							name = v.fullname,
-							callsign = GetResourceKvpString(v['cid']..'-callsign'),
-							duty = v.job.duty,
-							radio = Radio,
-							sig100 = known100s[Radio]
-						})
-					elseif v.job.name == 'doc' then
-						local Radio = Player(v.source).state.radioChannel or 0
-						if Radio > 100 then
-							Radio = 0
-						end
-						table.insert(doc, {
-							cid = v.cid,
-							name = v.fullname,
-							callsign = GetResourceKvpString(v['cid']..'-callsign'),
-							duty = v.job.duty,
-							radio = Radio,
-							sig100 = known100s[Radio]
-						})
-					elseif v.job.name == 'sapr' then
-						local Radio = Player(v.source).state.radioChannel or 0
-						if Radio > 100 then
-							Radio = 0
-						end
-						table.insert(sapr, {
-							cid = v.cid,
-							name = v.fullname,
-							callsign = GetResourceKvpString(v['cid']..'-callsign'),
-							duty = v.job.duty,
-							radio = Radio
-						})
-					elseif v.job.name == 'pa' then
-						local Radio = Player(v.source).state.radioChannel or 0
-						if Radio > 100 then
-							Radio = 0
-						end
-						table.insert(pa, {
-							cid = v.cid,
-							name = v.fullname,
-							callsign = GetResourceKvpString(v['cid']..'-callsign'),
-							duty = v.job.duty,
-							radio = Radio,
-							sig100 = known100s[Radio]
-						})
-					elseif v.job.name == 'ambulance' then
-						local Radio = Player(v.source).state.radioChannel or 0
-						if Radio > 100 then
-							Radio = 0
-						end
-						table.insert(ems, {
-							cid = v.cid,
-							name = v.fullname,
-							callsign = GetResourceKvpString(v['cid']..'-callsign'),
-							duty = v.job.duty,
-							radio = Radio,
-							sig100 = known100s[Radio]
-						})
-					end
+	local Player = QBCore.Functions.GetPlayer(source)
+	if Player.PlayerData.job.name == 'police' or Player.PlayerData.job.name == 'doj' or Player.PlayerData.job.name == 'ambulance' then
+		local cs = Player.PlayerData.metadata["callsign"]
+		if cs then TriggerClientEvent('erp_mdt:updateCallsign', source, cs) end
+		local police, ambulance = {}, {}
+		for k,v in pairs(QBCore.Functions.GetPlayers()) do
+        	local ped = QBCore.Functions.GetPlayer(v)
+			if ped.PlayerData.job.name == 'police' then
+				-- local Radio = Player(v.source).state.radioChannel or 0
+				-- if Radio > 100 then
+				-- 	Radio = 0
+				-- end
+				table.insert(police, {
+					id = v,
+					name = ped.PlayerData.charinfo.firstname .. ' ' .. ped.PlayerData.charinfo.lastname,
+					callsign = '666',
+					duty = 'true',
+					radio = '1',
+					sig100 = known100s[Radio]
+				})
+			elseif ped.PlayerData.job.name == 'ambulance' then
+				local Radio = Player(v.source).state.radioChannel or 0
+				if Radio > 100 then
+					Radio = 0
 				end
-				TriggerClientEvent('erp_mdt:getActiveUnits', source, lspd, bcso, sast, sasp, doc, sapr, pa, ems)
+				table.insert(ambulance, {
+					id = v,
+					name = ped.PlayerData.charinfo.firstname .. ' ' .. ped.PlayerData.charinfo.lastname,
+					callsign = 'M-64',
+					duty = 'true',
+					radio = '1',
+					sig100 = known100s[Radio]
+				})
 			end
 		end
-	end)
+		TriggerClientEvent('erp_mdt:getActiveUnits', source, police, ambulance)
+	end
 end)
 
 local function GetIncidentName(id, cb)
@@ -190,34 +105,32 @@ local function GetIncidentName(id, cb)
 end
 
 AddEventHandler('erp_mdt:open', function(source)
-	TriggerEvent('echorp:getplayerfromid', source, function(result)
-		if result then
-			if result.job and (result.job.isPolice or result.job.name == 'doj') then
-				-- get warrants
-				exports.oxmysql:execute("SELECT * FROM pd_convictions WHERE warrant='1'", {}, function(warrants)
-					for i=1, #warrants do
-						GetNameFromId(warrants[i]['cid'], function(res)
-							if res and res[1] then
-								warrants[i]['name'] = res[1]['firstname']..' '..res[1]['lastname']
-							else
-								warrants[i]['name'] = "Unknown"
-							end
-						end)
-						GetIncidentName(warrants[i]['linkedincident'], function(res)
-							if res and res[1] then warrants[i]['reporttitle'] = res[1]['title']
-							else warrants[i]['reporttitle'] = "Unknown report title" end
-						end)
-						warrants[i]['firsttime'] = i == 1
-						TriggerClientEvent('erp_mdt:dashboardWarrants', result.source, warrants[i])
+	print('MDT Open?')
+	local Player = QBCore.Functions.GetPlayer(source)
+    if Player.PlayerData.job.name == 'police' or Player.PlayerData.job.name == 'doj' then
+		-- get warrants
+		exports.oxmysql:execute("SELECT * FROM pd_convictions WHERE warrant='1'", {}, function(warrants)
+			for i=1, #warrants do
+				GetNameFromId(warrants[i]['cid'], function(res)
+					if res and res[1] then
+						warrants[i]['name'] = res[1]['firstname']..' '..res[1]['lastname']
+					else
+						warrants[i]['name'] = "Unknown"
 					end
 				end)
-			elseif result.job and (result.job.name == 'ambulance') then
-				exports.oxmysql:execute("SELECT * FROM `ems_reports` ORDER BY `id` DESC LIMIT 20", {}, function(matches)
-					TriggerClientEvent('erp_mdt:getAllReports', result.source, matches)		
+				GetIncidentName(warrants[i]['linkedincident'], function(res)
+					if res and res[1] then warrants[i]['reporttitle'] = res[1]['title']
+					else warrants[i]['reporttitle'] = "Unknown report title" end
 				end)
+				warrants[i]['firsttime'] = i == 1
+				TriggerClientEvent('erp_mdt:dashboardWarrants', result.source, warrants[i])
 			end
-		end
-	end)
+		end)
+	elseif result.job and (result.job.name == 'ambulance') then
+		exports.oxmysql:execute("SELECT * FROM `ems_reports` ORDER BY `id` DESC LIMIT 20", {}, function(matches)
+			TriggerClientEvent('erp_mdt:getAllReports', result.source, matches)		
+		end)
+	end
 end)
 
 AddEventHandler('erp_mdt:open', function(source)
@@ -255,114 +168,112 @@ end
 
 RegisterNetEvent('erp_mdt:searchProfile')
 AddEventHandler('erp_mdt:searchProfile', function(sentData)
+	print('Searching Data')
 	if sentData then
+		print(sentData)
 		local function PpPpPpic(gender, profilepic)
 			if profilepic then return profilepic end;
 			if gender == "f" then return "img/female.png" end;
 			return "img/male.png"
 		end
-		TriggerEvent('echorp:getplayerfromid', source, function(result)
-			if result then
-				if result.job and (result.job.isPolice or result.job.name == 'doj') then
-					exports.oxmysql:execute("SELECT id, firstname, lastname, gender, profilepic FROM `users` WHERE LOWER(`firstname`) LIKE :query OR LOWER(`lastname`) LIKE :query OR LOWER(`id`) LIKE :query OR CONCAT(LOWER(`firstname`), ' ', LOWER(`lastname`)) LIKE :query LIMIT 20", {
-						query = string.lower('%'..sentData..'%')
-					}, function(people)
-						for i=1, #people do
+		local Player = QBCore.Functions.GetPlayer(source)
+		if Player.PlayerData.job.name == 'police' then
+			exports.oxmysql:execute("SELECT * FROM `players` WHERE `charinfo` LIKE ?", {query = string.lower('%'..sentData..'%')}, function(people) -- % wildcard, needed to search for all alike results
+			-- exports.oxmysql:execute("SELECT * FROM `players` WHERE `charinfo` LIKE :query OR LOWER(`lastname`) LIKE :query OR LOWER(`id`) LIKE :query OR CONCAT(LOWER(`firstname`), ' ', LOWER(`lastname`)) LIKE :query LIMIT 20", {query = string.lower('%'..sentData..'%')}, function(people)
+				for i=1, #people do
 
-							people[i]['warrant'] = false
+					people[i]['warrant'] = false
 
-							people[i]['theory'] = false
-							people[i]['car'] = false
-							people[i]['bike'] = false
-							people[i]['truck'] = false
+					people[i]['theory'] = false
+					people[i]['car'] = false
+					people[i]['bike'] = false
+					people[i]['truck'] = false
 
-							people[i]['weapon'] = false
-							people[i]['hunting'] = false
-							people[i]['pilot'] = false
-							people[i]['convictions'] = 0
-							people[i]['pp'] = PpPpPpic(people[i]['gender'], people[i]['profilepic'])
+					people[i]['weapon'] = false
+					people[i]['hunting'] = false
+					people[i]['pilot'] = false
+					people[i]['convictions'] = 0
+					people[i]['pp'] = PpPpPpic(people[i]['gender'], people[i]['profilepic'])
 
-							GetConvictions(people[i]['id'], function(cc)
-								if cc then
-									for x=1, #cc do
-										if cc[x] then
-											if cc[x]['warrant'] then people[i]['warrant'] = true end
-											if cc[x]['associated'] == "0" then
-												local charges = json.decode(cc[x]['charges'])
-												people[i]['convictions'] = people[i]['convictions'] + #charges
-											end
-										end
-									end
-								end				
-							end)
-
-							GetLicenseInfo(people[i]['id'], function(licenseinfo)
-								if licenseinfo and #licenseinfo > 0 then
-									for suckdick=1, #licenseinfo do
-										if licenseinfo[suckdick]['type'] == 'weapon' then
-											people[i]['weapon'] = true
-										elseif licenseinfo[suckdick]['type'] == 'theory' then
-											people[i]['theory'] = true
-										elseif licenseinfo[suckdick]['type'] == 'drive' then
-											people[i]['car'] = true
-										elseif licenseinfo[suckdick]['type'] == 'drive_bike' then
-											people[i]['bike'] = true
-										elseif licenseinfo[suckdick]['type'] == 'drive_truck' then
-											people[i]['truck'] = true
-										elseif licenseinfo[suckdick]['type'] == 'hunting' then
-											people[i]['hunting'] = true
-										elseif licenseinfo[suckdick]['type'] == 'pilot' then
-											people[i]['pilot'] = true
-										end
+					GetConvictions(people[i]['id'], function(cc)
+						if cc then
+							for x=1, #cc do
+								if cc[x] then
+									if cc[x]['warrant'] then people[i]['warrant'] = true end
+									if cc[x]['associated'] == "0" then
+										local charges = json.decode(cc[x]['charges'])
+										people[i]['convictions'] = people[i]['convictions'] + #charges
 									end
 								end
-							end)
-						end
-
-						TriggerClientEvent('erp_mdt:searchProfile', result.source, people)
+							end
+						end				
 					end)
-				elseif result.job and (result.job.name == 'ambulance') then
-					exports.oxmysql:execute("SELECT id, firstname, lastname, gender, profilepic, dateofbirth FROM `users` WHERE LOWER(`firstname`) LIKE :query OR LOWER(`lastname`) LIKE :query OR LOWER(`id`) LIKE :query OR CONCAT(LOWER(`firstname`), ' ', LOWER(`lastname`)) LIKE :query LIMIT 20", {
-						query = string.lower('%'..sentData..'%')
-					}, function(people)
-						for i=1, #people do
-							people[i]['warrant'] = false
-							people[i]['theory'] = false
-							people[i]['car'] = false
-							people[i]['bike'] = false
-							people[i]['truck'] = false
-							people[i]['weapon'] = false
-							people[i]['hunting'] = false
-							people[i]['pilot'] = false
-							people[i]['pp'] = PpPpPpic(people[i]['gender'], people[i]['profilepic'])
-							GetLicenseInfo(people[i]['id'], function(licenseinfo)
-								if licenseinfo and #licenseinfo > 0 then
-									for suckdick=1, #licenseinfo do
-										if licenseinfo[suckdick]['type'] == 'weapon' then
-											people[i]['weapon'] = true
-										elseif licenseinfo[suckdick]['type'] == 'theory' then
-											people[i]['theory'] = true
-										elseif licenseinfo[suckdick]['type'] == 'drive' then
-											people[i]['car'] = true
-										elseif licenseinfo[suckdick]['type'] == 'drive_bike' then
-											people[i]['bike'] = true
-										elseif licenseinfo[suckdick]['type'] == 'drive_truck' then
-											people[i]['truck'] = true
-										elseif licenseinfo[suckdick]['type'] == 'hunting' then
-											people[i]['hunting'] = true
-										elseif licenseinfo[suckdick]['type'] == 'pilot' then
-											people[i]['pilot'] = true
-										end
-									end
-								end
-							end)
-						end
 
-						TriggerClientEvent('erp_mdt:searchProfile', result.source, people, true)
+					GetLicenseInfo(people[i]['id'], function(licenseinfo)
+						if licenseinfo and #licenseinfo > 0 then
+							for suckdick=1, #licenseinfo do
+								if licenseinfo[suckdick]['type'] == 'weapon' then
+									people[i]['weapon'] = true
+								elseif licenseinfo[suckdick]['type'] == 'theory' then
+									people[i]['theory'] = true
+								elseif licenseinfo[suckdick]['type'] == 'drive' then
+									people[i]['car'] = true
+								elseif licenseinfo[suckdick]['type'] == 'drive_bike' then
+									people[i]['bike'] = true
+								elseif licenseinfo[suckdick]['type'] == 'drive_truck' then
+									people[i]['truck'] = true
+								elseif licenseinfo[suckdick]['type'] == 'hunting' then
+									people[i]['hunting'] = true
+								elseif licenseinfo[suckdick]['type'] == 'pilot' then
+									people[i]['pilot'] = true
+								end
+							end
+						end
 					end)
 				end
-			end
-		end)
+
+				TriggerClientEvent('erp_mdt:searchProfile', result.source, people)
+			end)
+		elseif Player.PlayerData.job.name == 'ambulance' then
+			exports.oxmysql:execute("SELECT id, firstname, lastname, gender, profilepic, dateofbirth FROM `users` WHERE LOWER(`firstname`) LIKE :query OR LOWER(`lastname`) LIKE :query OR LOWER(`id`) LIKE :query OR CONCAT(LOWER(`firstname`), ' ', LOWER(`lastname`)) LIKE :query LIMIT 20", {
+				query = string.lower('%'..sentData..'%')
+			}, function(people)
+				for i=1, #people do
+					people[i]['warrant'] = false
+					people[i]['theory'] = false
+					people[i]['car'] = false
+					people[i]['bike'] = false
+					people[i]['truck'] = false
+					people[i]['weapon'] = false
+					people[i]['hunting'] = false
+					people[i]['pilot'] = false
+					people[i]['pp'] = PpPpPpic(people[i]['gender'], people[i]['profilepic'])
+					GetLicenseInfo(people[i]['id'], function(licenseinfo)
+						if licenseinfo and #licenseinfo > 0 then
+							for suckdick=1, #licenseinfo do
+								if licenseinfo[suckdick]['type'] == 'weapon' then
+									people[i]['weapon'] = true
+								elseif licenseinfo[suckdick]['type'] == 'theory' then
+									people[i]['theory'] = true
+								elseif licenseinfo[suckdick]['type'] == 'drive' then
+									people[i]['car'] = true
+								elseif licenseinfo[suckdick]['type'] == 'drive_bike' then
+									people[i]['bike'] = true
+								elseif licenseinfo[suckdick]['type'] == 'drive_truck' then
+									people[i]['truck'] = true
+								elseif licenseinfo[suckdick]['type'] == 'hunting' then
+									people[i]['hunting'] = true
+								elseif licenseinfo[suckdick]['type'] == 'pilot' then
+									people[i]['pilot'] = true
+								end
+							end
+						end
+					end)
+				end
+
+				TriggerClientEvent('erp_mdt:searchProfile', result.source, people, true)
+			end)
+		end
 	end
 end)
 
@@ -372,98 +283,92 @@ end)
 
 RegisterNetEvent('erp_mdt:opendashboard')
 AddEventHandler('erp_mdt:opendashboard', function()
-	TriggerEvent('echorp:getplayerfromid', source, function(result)
-		if result then
-			if result.job and result.job.isPolice then
-				exports.oxmysql:execute('SELECT * FROM `pd_bulletin`', {}, function(bulletin)
-					TriggerClientEvent('erp_mdt:dashboardbulletin', result.source, bulletin)
-				end)
-			elseif result.job and (result.job.name == 'ambulance') then
-				exports.oxmysql:execute('SELECT * FROM `ems_bulletin`', {}, function(bulletin)
-					TriggerClientEvent('erp_mdt:dashboardbulletin', result.source, bulletin)
-				end)
-			elseif result.job and (result.job.name == 'doj') then
-				exports.oxmysql:execute('SELECT * FROM `doj_bulletin`', {}, function(bulletin)
-					TriggerClientEvent('erp_mdt:dashboardbulletin', result.source, bulletin)
-				end)
-			end
-		end
-	end)
+	local src = source
+	local Player = QBCore.Functions.GetPlayer(source)
+	if Player.PlayerData.job.name == 'police' then
+		exports.oxmysql:execute('SELECT * FROM `pd_bulletin`', {}, function(bulletin)
+			TriggerClientEvent('erp_mdt:dashboardbulletin', src, bulletin)
+		end)
+	elseif Player.PlayerData.job.name == 'ambulance' then
+		exports.oxmysql:execute('SELECT * FROM `ems_bulletin`', {}, function(bulletin)
+			TriggerClientEvent('erp_mdt:dashboardbulletin', source, bulletin)
+		end)
+	elseif Player.PlayerData.job.name == 'doj' then
+		exports.oxmysql:execute('SELECT * FROM `doj_bulletin`', {}, function(bulletin)
+			TriggerClientEvent('erp_mdt:dashboardbulletin', source, bulletin)
+		end)
+	end
 end)
 
 RegisterNetEvent('erp_mdt:newBulletin')
 AddEventHandler('erp_mdt:newBulletin', function(title, info, time)
 	if title and info and time then
-		TriggerEvent('echorp:getplayerfromid', source, function(result)
-			if result then
-				if result.job and result.job.isPolice then
-					exports.oxmysql:insert('INSERT INTO `pd_bulletin` (`title`, `desc`, `author`, `time`) VALUES (:title, :desc, :author, :time)', {
-						title = title,
-						desc = info,
-						author = result.fullname,
-						time = tostring(time)
-					}, function(sqlResult)
-						TriggerEvent('erp_mdt:AddLog', "A new bulletin was added by "..result.firstname.." "..result.lastname.." with the title: "..title.."!")
-						TriggerClientEvent('erp_mdt:newBulletin', -1, result.source, {id = sqlResult, title = title, info = info, time = time, author = result.fullname}, 'police')
-					end)
-				elseif result.job and (result.job.name == 'ambulance') then
-					exports.oxmysql:insert('INSERT INTO `ems_bulletin` (`title`, `desc`, `author`, `time`) VALUES (:title, :desc, :author, :time)', {
-						title = title,
-						desc = info,
-						author = result.fullname,
-						time = tostring(time)
-					}, function(sqlResult)
-						TriggerEvent('erp_mdt:AddLog', "A new bulletin was added by "..result.firstname.." "..result.lastname.." with the title: "..title.."!")
-						TriggerClientEvent('erp_mdt:newBulletin', -1, result.source, {id = sqlResult, title = title, info = info, time = time, author = result.fullname}, result.job.name)
-					end)
-				elseif result.job and (result.job.name == 'doj') then
-					exports.oxmysql:insert('INSERT INTO `doj_bulletin` (`title`, `desc`, `author`, `time`) VALUES (:title, :desc, :author, :time)', {
-						title = title,
-						desc = info,
-						author = result.fullname,
-						time = tostring(time)
-					}, function(sqlResult)
-						TriggerEvent('erp_mdt:AddLog', "A new bulletin was added by "..result.firstname.." "..result.lastname.." with the title: "..title.."!")
-						TriggerClientEvent('erp_mdt:newBulletin', -1, result.source, {id = sqlResult, title = title, info = info, time = time, author = result.fullname}, result.job.name)
-					end)
-				end
-			end
-		end)
+		local Player = QBCore.Functions.GetPlayer(source)
+    	if Player.PlayerData.job.name == 'police' then
+		-- if result.job and result.job.isPolice then
+			exports.oxmysql:insert('INSERT INTO `pd_bulletin` (`title`, `desc`, `author`, `time`) VALUES (:title, :desc, :author, :time)', {
+				title = title,
+				desc = info,
+				author = Player.PlayerData.charinfo.firstname..' '..Player.PlayerData.charinfo.lastname,
+				time = tostring(time)
+			}, function(sqlResult)
+				print(sqlResult)
+				TriggerEvent('erp_mdt:AddLog', "A new bulletin was added by test test with the title: "..title.."!")
+				TriggerClientEvent('erp_mdt:newBulletin', -1, source, {id = sqlResult, title = title, info = info, time = time, author = author}, 'police')
+			end)
+		elseif Player.PlayerData.job.name == 'ambulance' then
+			exports.oxmysql:insert('INSERT INTO `ems_bulletin` (`title`, `desc`, `author`, `time`) VALUES (:title, :desc, :author, :time)', {
+				title = title,
+				desc = info,
+				author = result.fullname,
+				time = tostring(time)
+			}, function(sqlResult)
+				TriggerEvent('erp_mdt:AddLog', "A new bulletin was added by "..result.firstname.." "..result.lastname.." with the title: "..title.."!")
+				TriggerClientEvent('erp_mdt:newBulletin', -1, result.source, {id = sqlResult, title = title, info = info, time = time, author = result.fullname}, result.job.name)
+			end)
+		elseif Player.PlayerData.job.name == 'doj' then
+			exports.oxmysql:insert('INSERT INTO `doj_bulletin` (`title`, `desc`, `author`, `time`) VALUES (:title, :desc, :author, :time)', {
+				title = title,
+				desc = info,
+				author = result.fullname,
+				time = tostring(time)
+			}, function(sqlResult)
+				TriggerEvent('erp_mdt:AddLog', "A new bulletin was added by "..result.firstname.." "..result.lastname.." with the title: "..title.."!")
+				TriggerClientEvent('erp_mdt:newBulletin', -1, result.source, {id = sqlResult, title = title, info = info, time = time, author = result.fullname}, result.job.name)
+			end)
+		end
 	end
 end)
 
 RegisterNetEvent('erp_mdt:deleteBulletin')
 AddEventHandler('erp_mdt:deleteBulletin', function(id)
 	if id then
-		TriggerEvent('echorp:getplayerfromid', source, function(result)
-			if result then
-				if result.job and result.job.isPolice then
-					exports.oxmysql:execute('SELECT `title` FROM `pd_bulletin` WHERE id=:id LIMIT 1', { id = id}, function(res)
-						if res and res[1] then
-							exports.oxmysql:executeSync("DELETE FROM `pd_bulletin` WHERE id=:id", { id = id })
-							TriggerEvent('erp_mdt:AddLog', "A bulletin was deleted by "..result.firstname.." "..result.lastname.." with the title: "..res[1]['title'].."!")
-							TriggerClientEvent('erp_mdt:deleteBulletin', -1, result.source, id, 'police')
-						end
-					end)
-				elseif result.job and (result.job.name == 'ambulance') then
-					exports.oxmysql:execute('SELECT `title` FROM `ems_bulletin` WHERE id=:id LIMIT 1', { id = id}, function(res)
-						if res and res[1] then
-							exports.oxmysql:executeSync("DELETE FROM `ems_bulletin` WHERE id=:id", { id = id })
-							TriggerEvent('erp_mdt:AddLog', "A bulletin was deleted by "..result.firstname.." "..result.lastname.." with the title: "..res[1]['title'].."!")
-							TriggerClientEvent('erp_mdt:deleteBulletin', -1, result.source, id, result.job.name)
-						end
-					end)
-				elseif result.job and (result.job.name == 'doj') then
-					exports.oxmysql:execute('SELECT `title` FROM `doj_bulletin` WHERE id=:id LIMIT 1', { id = id}, function(res)
-						if res and res[1] then
-							exports.oxmysql:executeSync("DELETE FROM `doj_bulletin` WHERE id=:id", { id = id })
-							TriggerEvent('erp_mdt:AddLog', "A bulletin was deleted by "..result.firstname.." "..result.lastname.." with the title: "..res[1]['title'].."!")
-							TriggerClientEvent('erp_mdt:deleteBulletin', -1, result.source, id, result.job.name)
-						end
-					end)
+		local Player = QBCore.Functions.GetPlayer(source)
+		if Player.PlayerData.job.name == 'police' then
+			exports.oxmysql:execute('SELECT `title` FROM `pd_bulletin` WHERE id=:id LIMIT 1', { id = id}, function(res)
+				if res and res[1] then
+					exports.oxmysql:executeSync("DELETE FROM `pd_bulletin` WHERE id=:id", { id = id })
+					TriggerEvent('erp_mdt:AddLog', "A bulletin was deleted by "..result.firstname.." "..result.lastname.." with the title: "..res[1]['title'].."!")
+					TriggerClientEvent('erp_mdt:deleteBulletin', -1, result.source, id, 'police')
 				end
-			end
-		end)
+			end)
+		elseif Player.PlayerData.job.name == 'ambulance' then
+			exports.oxmysql:execute('SELECT `title` FROM `ems_bulletin` WHERE id=:id LIMIT 1', { id = id}, function(res)
+				if res and res[1] then
+					exports.oxmysql:executeSync("DELETE FROM `ems_bulletin` WHERE id=:id", { id = id })
+					TriggerEvent('erp_mdt:AddLog', "A bulletin was deleted by "..result.firstname.." "..result.lastname.." with the title: "..res[1]['title'].."!")
+					TriggerClientEvent('erp_mdt:deleteBulletin', -1, result.source, id, result.job.name)
+				end
+			end)
+		elseif Player.PlayerData.job.name == 'doj' then
+			exports.oxmysql:execute('SELECT `title` FROM `doj_bulletin` WHERE id=:id LIMIT 1', { id = id}, function(res)
+				if res and res[1] then
+					exports.oxmysql:executeSync("DELETE FROM `doj_bulletin` WHERE id=:id", { id = id })
+					TriggerEvent('erp_mdt:AddLog', "A bulletin was deleted by "..result.firstname.." "..result.lastname.." with the title: "..res[1]['title'].."!")
+					TriggerClientEvent('erp_mdt:deleteBulletin', -1, result.source, id, result.job.name)
+				end
+			end)
+		end
 	end
 end)
 

@@ -1,32 +1,33 @@
+local QBCore = exports['qb-core']:GetCoreObject()
 local isOpen = false
 local callSign = ""
-local PlayerData = {}
-
-RegisterNetEvent('echorp:playerSpawned') -- Use this to grab player info on spawn.
-AddEventHandler('echorp:playerSpawned', function(sentData) PlayerData = sentData end)
+local PlayerData = QBCore.Functions.GetPlayerData()
 
 RegisterNetEvent('echorp:updateinfo')
 AddEventHandler('echorp:updateinfo', function(toChange, targetData) 
     PlayerData[toChange] = targetData
 end)
 
-RegisterNetEvent('echorp:doLogout') -- Use this to logout.
-AddEventHandler('echorp:doLogout', function(sentData) 
-    PlayerData = {} 
+RegisterNetEvent('QBCore:Client:OnPlayerUnload', function()
+    PlayerData = {}
 end)
+
+-- RegisterNetEvent('QBCore:Client:OnJobUpdate', function(JobInfo)
+--     PlayerJob = JobInfo
+-- end)
 
 function EnableGUI(enable)
     print("MDT Enable GUI", enable)
     if enable then TriggerServerEvent('erp_mdt:opendashboard') end
     SetNuiFocus(enable, enable)
-    SendNUIMessage({ type = "show", enable = enable, job = PlayerData['job']['name'] })
+    SendNUIMessage({ type = "show", enable = enable, job = PlayerData.job.name })
     isOpen = enable
     TriggerEvent('erp_mdt:animation')
 end
 
 function RefreshGUI()
     SetNuiFocus(false, false)
-    SendNUIMessage({ type = "show", enable = false, job = PlayerData['job']['name'] })
+    SendNUIMessage({ type = "show", enable = false, job = PlayerData.job.name })
     isOpen = false
 end
 
@@ -845,8 +846,10 @@ AddEventHandler('erp_mdt:getPenalCode', function(titles, penalcode)
 end)
 
 RegisterNetEvent('erp_mdt:getActiveUnits')
-AddEventHandler('erp_mdt:getActiveUnits', function(lspd, bcso, sast, sasp, doc, sapr, pa, ems)
-    SendNUIMessage({ type = "getActiveUnits", lspd = lspd, bcso = bcso, sast = sast, doc = doc, sasp = sasp, sapr = sapr, pa = pa, ems = ems })
+AddEventHandler('erp_mdt:getActiveUnits', function(police, ambulance)
+    print(json.encode(police))
+    print(json.encode(ambulance))
+    SendNUIMessage({ type = "getActiveUnits", police = police, ambulance = ambulance})
 end)
 
 RegisterNUICallback("toggleDuty", function(data, cb)
@@ -880,8 +883,8 @@ end)
 
 RegisterNetEvent('erp_mdt:sig100')
 AddEventHandler('erp_mdt:sig100', function(radio, type)
-    local job = PlayerData['job']
-    if (job.isPolice or job.name == 'ambulance') and job.duty == 1 then
+    local job = PlayerData.job.name
+    if job == 'police' or job == 'ambulance' then
         if type == true then
             exports['erp_notifications']:PersistentAlert("START", "signall100-"..radio, "inform", "Radio "..radio.." is currently signal 100!")
         end
@@ -930,8 +933,8 @@ end)
 
 RegisterNetEvent('erp_mdt:callDetach')
 AddEventHandler('erp_mdt:callDetach', function(callid, sentData)
-    local job = PlayerData['job']
-    if job.isPolice or job.name == 'ambulance' then SendNUIMessage({ type = "callDetach", callid = callid, data = tonumber(sentData) }) end
+    local job = PlayerData.job.name
+    if job == 'police' or job == 'ambulance' then SendNUIMessage({ type = "callDetach", callid = callid, data = tonumber(sentData) }) end
 end)
 
 RegisterNUICallback("callAttach", function(data, cb)
@@ -941,8 +944,8 @@ end)
 
 RegisterNetEvent('erp_mdt:callAttach')
 AddEventHandler('erp_mdt:callAttach', function(callid, sentData)
-    local job = PlayerData['job']
-    if job.isPolice or job.name == 'ambulance' then
+    local job = PlayerData.job.name
+    if job == 'police' or job == 'ambulance' then
         SendNUIMessage({ type = "callAttach", callid = callid, data = tonumber(sentData) })
     end
 end)
@@ -994,8 +997,8 @@ end)
 
 RegisterNetEvent('erp_mdt:dashboardMessage')
 AddEventHandler('erp_mdt:dashboardMessage', function(sentData)
-    local job = PlayerData['job']
-    if job.isPolice or job.name == 'ambulance' then
+    local job = PlayerData.job.name
+    if job == 'police' or job == 'ambulance' then
         SendNUIMessage({ type = "dispatchmessage", data = sentData })
     end
 end)
