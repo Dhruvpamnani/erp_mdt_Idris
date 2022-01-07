@@ -1,4 +1,5 @@
-Matching Dispatch **Required**: https://github.com/FlawwsX/erp_dispatch
+# EchoRP MDT QBCore Edit (WIP)
 
-Doesn't support ESX/QBcore, yet, someone can make a branch and PR.
-Can also expand on this if you wish, have fun.
+EchoRP MDT Released by Flawws#9999 from Echo RP rewritten and restructured for QBCore.
+
+This is still a work in progress please wait for 1.0 release.

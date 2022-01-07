@@ -1,15 +1,15 @@
 fx_version 'cerulean'
 game 'gta5'
 
-author 'Flawws & Flakey'
-description 'This is the EchoRP MDT'
-version '1.0.0'
+author 'Flawws, Flakey and Idris'
+description 'EchoRP MDT Rewrite for QBCore'
+version '0.0.1'
 
 lua54 'yes'
 
-
-server_script 'sv_main.lua'
-client_script 'cl_main.lua'
+shared_script 'shared/config.lua'
+server_script 'server/main.lua'
+client_script 'client/main.lua'
 
 ui_page 'ui/dashboard.html'
 
